@@ -1,0 +1,11 @@
+RPKI Announcements
+
+"Are we there yet? On RPKI's Deployment and Security"
+Measures RPKI uptake 
+Reimplementation: https://github.com/RPKI/rov-measurement-code/tree/master/uncontrolled
+
+"Towards a Rigorous Methodology for Measuring Adoption of RPKI Route Validation and Filtering"
+Measures RPKI uptake (challenges Are We There Yet approach)
+Implementation: https://github.com/RPKI/rov-measurement-code
+
+http://localcert.ripe.net:8088/export
