@@ -1,49 +1,39 @@
-import csv 
+import csv, random, radix 
 from netaddr import *
-import random 
-import radix
+
 # https://netaddr.readthedocs.io/en/latest/tutorial_03.html
 # https://pypi.org/project/py-radix/
+# https://stuffivelearned.org/doku.php?id=programming:python:pyradix_search_all_patch
 
-count_overlap_no_hierarchy = 0 
+def read_ip_ranges_into_radix(file_to_read):
+    rtree = radix.Radix()
 
-all_roas = []
+    with open(file_to_read) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",")
+        next(csv_reader, None)  # skip the headers
+        for row in csv_reader:
+            cidr_address = row[1]
+            rnode = rtree.add(cidr_address)
+            rnode.data["issuing_as"] = row[0]
+    return rtree
 
-roas_to_check = []
+def count_hierarchy(ip_address_tree):
+    count_number_overlaps = 0
+    max_hierarchy_depth = 0
+    for node in ip_address_tree.nodes():
+        hierarchy = ip_address_tree.search_covering(node.prefix)
+        if len(hierarchy) > 1:
+            count_number_overlaps += 1
+            max_hierarchy_depth = max(max_hierarchy_depth, len(hierarchy))
+            print "\n\n\n"
+            print "Covered node: " + str(node.data["issuing_as"]) + ", " + str(node.prefix)
+            for ipaddr_node in hierarchy:
+                print ipaddr_node.data["issuing_as"]
+                print ipaddr_node.prefix
 
-all_ipaddresses = IPSet()
-#with open('RPKI_announcements/2018-11-15_05:08_RPKI_announcements.csv') as csv_file:
-with open('test.csv') as csv_file:
-
-    csv_reader = csv.reader(csv_file, delimiter=",")
-    next(csv_reader, None)  # skip the headers
-    for row in csv_reader:
-        if (random.random() < 0.01):
-            print row
-        ip_intersect = all_ipaddresses & IPSet(IPNetwork(row[1]))
-        if ip_intersect != IPSet():
-            count_overlap_no_hierarchy += 1 
-            roas_to_check.append(IPNetwork(row[1]))
-            print roas_to_check
-        all_roas.append(IPNetwork(row[1]))
-        all_ipaddresses = all_ipaddresses | IPSet(IPNetwork(row[1]))
-
-print roas_to_check
-
-
-overlapping_roas = []
-for entry_1 in roas_to_check:
-    overlap_list = [entry_1]
-    for entry_2 in all_roas: 
-        if entry_1 == entry_2:
-            continue 
-        elif IPSet(entry_1).issubset(IPSet(entry_2)):
-            overlap_list.append(entry_2)
-        elif IPSet(entry_1).issuperset(IPSet(entry_2)):
-            roas_to_check.append(entry_2)
-    if len(overlap_list) > 1:
-        overlapping_roas.append(overlap_list)
+    print max_hierarchy_depth
+    print count_number_overlaps
 
 
-print overlapping_roas
-print count_overlap_no_hierarchy
+all_ip_addresses_tree = read_ip_ranges_into_radix('RPKI_announcements/2018-10-30_18:38_RPKI_announcements.csv')
+count_hierarchy(all_ip_addresses_tree)
