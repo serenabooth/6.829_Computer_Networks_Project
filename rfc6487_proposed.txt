@@ -686,6 +686,22 @@ RFC 6487              Resource Certificate Profile         February 2012
    resource set of this certificate is inherited from that of the
    certificate's issuer.
 
+4.9  Revocation Policy 
+
+   This OPTIONAL field denotes whether an IP address block is leased or
+   sold for use to an AS. This field is represented as an integer or enum,
+   indicating which CAs retain revocation rights. A subleaser SHOULD
+   always be able to revoke their own certificate. However, a
+   leesee should only be able to revoke child certificates in case of
+   a loan, and not sale, of IP address space. 
+
+       revocation_policy {
+         all: 0  //corresponds to the lease of IP address space
+         subject_only: 1 //corresponds to the sale of IP address space
+       }
+
+   In the absence of this field, revocation_policy will default to all. 
+
 5.  Resource Certificate Revocation Lists
 
    Each CA MUST issue a version 2 CRL that is consistent with [RFC5280].
