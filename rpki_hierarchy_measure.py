@@ -1,4 +1,7 @@
 import csv, random, radix, os
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from netaddr import *
 
 # https://netaddr.readthedocs.io/en/latest/tutorial_03.html
@@ -88,6 +91,28 @@ def compare_radix_trees(tree1, tree2):
     removed_prefixes = list(set(tree1_prefixes) - set(tree2_prefixes))
     return (added_prefixes, removed_prefixes)
 
+
+def write_churn_to_graph(all_trees):
+    date_of_entries = []
+    added_prefixes_over_time = []
+    removed_prefixes_over_time = []
+    for i in range(1, len(all_trees)): 
+        date_of_entries.append(all_trees[i][0][0:10])
+        added_prefixes, removed_prefixes = compare_radix_trees(all_trees[0][1], all_trees[i][1])
+        added_prefixes_over_time.append(len(added_prefixes))
+        removed_prefixes_over_time.append(len(removed_prefixes))
+
+    print added_prefixes_over_time
+    print removed_prefixes_over_time
+
+    plt.xticks(np.arange(0, len(date_of_entries)), date_of_entries, rotation=90)
+    plt.plot(added_prefixes_over_time)
+    plt.plot(removed_prefixes_over_time)
+    plt.title("ROA Churn: Number of Entries Added or Removed")
+    plt.show()
+
+
+
 """
 Main control logic
 Read in each day of ROAs
@@ -99,30 +124,22 @@ def main():
     rpki_announcements_per_day.sort()
     radix_trees = []
 
-    i = 0 
+    # i = 0 
     for day_of_roas in rpki_announcements_per_day: 
         if ".csv" in day_of_roas: 
             all_ip_addresses_tree, num_duplicates, num_overlaps = read_ip_ranges_into_radix('RPKI_announcements/' + day_of_roas)
-            count_hierarchy(day_of_roas, all_ip_addresses_tree, num_duplicates, num_overlaps)
+            # count_hierarchy(day_of_roas, all_ip_addresses_tree, num_duplicates, num_overlaps)
 
-            radix_trees.append(all_ip_addresses_tree)
+            radix_trees.append((day_of_roas, all_ip_addresses_tree))
 
-            if i >= 1: 
-                added_prefixes, removed_prefixes = compare_radix_trees(radix_trees[i-1], radix_trees[i])
-                print "    Added prefixes: " + str(len(added_prefixes))
-                print "    Removed prefixes: " + str(len(removed_prefixes))
+            # if i >= 1: 
+            #     added_prefixes, removed_prefixes = compare_radix_trees(radix_trees[i-1], radix_trees[i])
+            #     print "    Added prefixes: " + str(len(added_prefixes))
+            #     print "    Removed prefixes: " + str(len(removed_prefixes))
 
-            i += 1
+            # i += 1
 
-
-
-
-    # for i in range(0, 1):#len(rpki_announcements_per_day) - 2):
-    #     added_prefixes, removed_prefixes = compare_radix_trees(radix_trees[i], radix_trees[i+1])
-    #     #print added_prefixes
-    #     #print removed_prefixes
-    #     print "Added prefixes: " + str(len(added_prefixes))
-    #     print "Removed prefixes: " + str(len(removed_prefixes))
+    write_churn_to_graph(radix_trees)
 
 if __name__ == "__main__":
     main()
